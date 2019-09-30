@@ -1,0 +1,47 @@
+$cell: 100px;
+$row: $cell * 8;
+$column: $row;
+
+*
+  box-sizing: border-box
+
+
+.Game
+  display: flex
+  justify-content: center
+
+
+.Board
+  diplay: flex
+  width: $row
+  flex: 0 0 $row
+  height: $column
+  background-color: gray
+
+.Row
+  display: flex
+  /* padding: 5px
+  flex: 0 0 $column
+  height: $cell
+  /* background-color: red
+
+.Square
+  flex: 0 0 $cell
+  display: flex
+  justify-content: center
+  align-items: center
+
+  img
+    display: block;
+    height: $cell - 10px
+    width: $cell - 10px
+
+.Square.Hint
+  border: 2px solid red
+
+
+.even
+  background-color: #222222
+
+.odd
+  background-color: lightgray
