@@ -41,25 +41,34 @@ class Pawn extends Figure {
         // entscheidet in Welche Richtung entlang der Y-Achse der Bauer gehen kann
         // TODO unnoetige Komplexitaet + unschoen
         const factor = this.team === "light" ? 1 : -1;
-        possibleMoves = possibleMoves.map(function(row, rowIndex) {
-            return row.map(function(cell, columnIndex) {
-                if (
-                    columnIndex === position.x &&
-                    rowIndex === position.y + 1 * factor
-                )
-                    return true;
-                if (!this.moved) {
-                    if (
-                        columnIndex === position.x &&
-                        rowIndex === position.y + 2 * factor
-                    ) {
-                        this.moved = true;
-                        return true;
-                    }
-                }
-            }, this);
-        }, this);
+
+
+        const couldMove = this.pawnMove(position.y + 1 * factor, position.x, board);
+        if (!this.moved && couldMove) {
+            this.moved = true;
+            this.pawnMove(position.y + 2 * factor, position.x, board);
+        }
+        this.pawnAttack(position.y + 1 * factor, position.x + 1 * factor);
+        this.pawnAttack(position.y + 1 * factor, position.x - 1 * factor);
+
         return possibleMoves;
+    }
+
+    pawnAttack(y, x, board) {
+        const t = x < board[0].length && y < board.length;
+        const t2 = t && board[y][x].team != this.team;
+        if (t && t2) {
+            board[y][x] = true;
+            return true;
+        }
+    }
+    pawnMove(y, x, board) {
+        const t = x < board[0].length && y < board.length;
+        const t2 = t && !board[y][x];
+        if (t && t2) {
+            board[y][x] = true;
+            return true;
+        }
     }
 }
 class Castle extends Figure {
@@ -167,8 +176,4 @@ class Noble extends Figure {
 
         return possibleMoves;
     }
-}
-
-function inBounds(x, y, board) {
-    return x < board[0].length && y < board.length;
 }
