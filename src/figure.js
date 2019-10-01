@@ -29,8 +29,11 @@ class Figure {
         this.imgPath = dispatchFigurePath(type, team);
     }
 }
-function indexInBetween(array, y, x){
+function indexInBetween(array, y, x) {
     return y >= 0 && y < array.length && x >= 0 && x < array[y].length;
+}
+function makeArray() {
+    return Array(8).fill(false);
 }
 class Pawn extends Figure {
     constructor(type, team) {
@@ -40,23 +43,38 @@ class Pawn extends Figure {
         this.moved = false;
     }
     moveSet(position, board) {
-        let possibleMoves = Array(8).fill(Array(8).fill(false));
-        // entscheidet in Welche Richtung entlang der Y-Achse der Bauer gehen kann
-        // TODO unnoetige Komplexitaet + unschoen
+        let possibleMoves = Array(8)
+            .fill(null)
+            .map(makeArray);
         const factor = this.team === "light" ? 1 : -1;
 
         const couldMove = this.pawnMove(
-            position.y + (1 * factor),
+            position.y + 1 * factor,
             position.x,
             board,
             possibleMoves
         );
-        // if (!this.moved && couldMove) {
-        //     this.moved = true;
-        //     this.pawnMove(position.y + 2 * factor, position.x, board, possibleMoves);
-        // }
-        // this.pawnAttack(position.y + 1 * factor, position.x + 1 * factor, board, possibleMoves);
-        // this.pawnAttack(position.y + 1 * factor, position.x - 1 * factor, board, possibleMoves);
+        if (!this.moved && couldMove) {
+            this.moved = true;
+            this.pawnMove(
+                position.y + 2 * factor,
+                position.x,
+                board,
+                possibleMoves
+            );
+        }
+        this.pawnAttack(
+            position.y + 1 * factor,
+            position.x + 1 * factor,
+            board,
+            possibleMoves
+        );
+        this.pawnAttack(
+            position.y + 1 * factor,
+            position.x - 1 * factor,
+            board,
+            possibleMoves
+        );
 
         return possibleMoves;
     }
@@ -73,7 +91,6 @@ class Pawn extends Figure {
         const t = x < board[0].length && y < board.length;
         const t2 = t && !board[y][x];
         if (t2) {
-            console.log(moves);
             moves[y][x] = true;
             return moves;
         }
@@ -86,49 +103,50 @@ class Castle extends Figure {
         this.moveSet = this.moveSet;
     }
     moveSet(position, board) {
-        let possible = Array(8).fill(Array(8).fill(false));
+        let possible = Array(8)
+            .fill(null)
+            .map(makeArray);
+
         const y = position.y;
         const x = position.x;
 
         // Vertikal
-        for (let v = y+1; indexInBetween(board, v, x); v++) {
-            if (!board[v][x]) { //An der Position ist keine Figur
+        for (let v = y + 1; indexInBetween(board, v, x); v++) {
+            if (!board[v][x]) {
+                //An der Position ist keine Figur
                 possible[v][x] = true;
             } else {
-                if (this.team != board[v][x].team) //Kein Frienly Fire
+                if (this.team != board[v][x].team)
+                    //Kein Frienly Fire
                     possible[v][x] = true;
                 break;
             }
         }
-        for (let v = y-1; indexInBetween(board, v, x); v--) {
+        for (let v = y - 1; indexInBetween(board, v, x); v--) {
             if (!board[v][x]) {
                 possible[v][x] = true;
             } else {
-                if (this.team != board[v][x].team)
-                    possible[v][x] = true;
+                if (this.team != board[v][x].team) possible[v][x] = true;
                 break;
             }
         }
         //Horizontal
-        for (let h = x+1; indexInBetween(board, y, h); h++) {
+        for (let h = x + 1; indexInBetween(board, y, h); h++) {
             if (!board[y][h]) {
                 possible[y][h] = true;
             } else {
-                if (this.team != board[y][h].team)
-                    possible[y][h] = true;
+                if (this.team != board[y][h].team) possible[y][h] = true;
                 break;
             }
         }
-        for (let h = x-1; indexInBetween(board, y, h); h--) {
+        for (let h = x - 1; indexInBetween(board, y, h); h--) {
             if (!board[y][h]) {
                 possible[y][h] = true;
             } else {
-                if (this.team != board[y][h].team)
-                    possible[y][h] = true;
+                if (this.team != board[y][h].team) possible[y][h] = true;
                 break;
             }
         }
-
 
         return possible;
     }
@@ -138,21 +156,31 @@ class King extends Figure {
         super(type, team);
         this.moveSet = this.moveSet;
     }
-    moveSet(position) {
-        let possibleMoves = Array(8).fill(Array(8).fill(false));
-        possibleMoves = possibleMoves.map(function(row, rowIndex) {
-            return row.map(function(cell, columnIndex) {
-                if (rowIndex === position.y && columnIndex === position.x + 1)
-                    return true;
-                if (rowIndex === position.y && columnIndex === position.x - 1)
-                    return true;
-                if (rowIndex === position.y - 1 && columnIndex === position.x)
-                    return true;
-                if (rowIndex === position.y + 1 && columnIndex === position.x)
-                    return true;
-            });
-        });
-        return possibleMoves;
+    moveSet(position, board) {
+        let possible = Array(8)
+            .fill(null)
+            .map(makeArray);
+        const i = position.y;
+        const j = position.x;
+        let turns = [
+            [j - 1, i - 1],
+            [j, i - 1],
+            [j + 1, i - 1],
+            [j + 1, i],
+            [j + 1, i + 1],
+            [j, i + 1],
+            [j - 1, i + 1],
+            [j - 1, i],
+        ];
+
+        for (let point of turns) {
+            const x = point[0];
+            const y = point[1];
+            if (indexInBetween(board, y, x))
+                if (board[y][x] == null) possible[y][x] = true;
+                else if (this.team != board[y][x].team) possible[y][x] = true;
+        }
+        return possible;
     }
 }
 class Queen extends Figure {
@@ -160,21 +188,91 @@ class Queen extends Figure {
         super(type, team);
         this.moveSet = this.moveSet;
     }
-    moveSet(position) {
-        let possibleMoves = Array(8).fill(Array(8).fill(false));
-        possibleMoves = possibleMoves.map(function(row, rowIndex) {
-            return row.map(function(cell, columnIndex) {
-                // Wie Castle
-                if (rowIndex === position.y) return true;
-                if (columnIndex === position.x) return true;
-                // Wie Bishop
-                if (rowIndex + columnIndex === position.x + position.y)
-                    return true;
-                const difference = position.y - position.x;
-                if (difference === rowIndex - columnIndex) return true;
-            });
-        });
-        return possibleMoves;
+    moveSet(position, board) {
+        let possible = Array(8)
+            .fill(null)
+            .map(makeArray);
+        const i = position.y;
+        const j = position.x;
+        let h, v;
+        //Vertikal
+        for (v = i + 1; indexInBetween(board, v, j); v++) {
+            if (board[v][j] == null) {
+                //An der Position ist keine Figur
+                possible[v][j] = true;
+            } else {
+                if (this.team != board[v][j].team)
+                    //Kein Frienly Fire
+                    possible[v][j] = true;
+                break;
+            }
+        }
+        for (v = i - 1; indexInBetween(board, v, j); v--) {
+            if (board[v][j] == null) {
+                possible[v][j] = true;
+            } else {
+                if (this.team != board[v][j].team) possible[v][j] = true;
+                break;
+            }
+        }
+        //Horizontal
+        for (h = j + 1; indexInBetween(board, i, h); h++) {
+            if (board[i][h] == null) {
+                possible[i][h] = true;
+            } else {
+                if (this.team != board[i][h].team) possible[i][h] = true;
+                break;
+            }
+        }
+        for (h = j - 1; indexInBetween(board, i, h); h--) {
+            if (board[i][h] == null) {
+                possible[i][h] = true;
+            } else {
+                if (this.team != board[i][h].team) possible[i][h] = true;
+                break;
+            }
+        }
+
+        //Nord-Ost
+        for (v = i + 1, h = j + 1; indexInBetween(board, v, h); v++, h++) {
+            if (board[v][h] == null) {
+                //An der Position ist keine Figur
+                possible[v][h] = true;
+            } else {
+                if (this.team != board[v][h].team)
+                    //Kein Frienly Fire
+                    possible[v][h] = true;
+                break;
+            }
+        } //Nord-West
+        for (v = i + 1, h = j - 1; indexInBetween(board, v, h); v++, h--) {
+            if (board[v][h] == null) {
+                possible[v][h] = true;
+            } else {
+                if (this.team != board[v][h].team) possible[v][h] = true;
+                break;
+            }
+        }
+        //Süd-Ost
+        for (v = i - 1, h = j + 1; indexInBetween(board, v, h); v--, h++) {
+            if (board[v][h] == null) {
+                possible[v][h] = true;
+            } else {
+                if (this.team != board[v][h].team) possible[v][h] = true;
+                break;
+            }
+        }
+        //Süd-West
+        for (v = i - 1, h = j - 1; indexInBetween(board, v, h); v--, h--) {
+            if (board[v][h] == null) {
+                possible[v][h] = true;
+            } else {
+                if (this.team != board[v][h].team) possible[v][h] = true;
+                break;
+            }
+        }
+
+        return possible;
     }
 }
 class Bishop extends Figure {
@@ -182,17 +280,52 @@ class Bishop extends Figure {
         super(type, team);
         this.moveSet = this.moveSet;
     }
-    moveSet(position) {
-        let possibleMoves = Array(8).fill(Array(8).fill(false));
-        possibleMoves = possibleMoves.map(function(row, rowIndex) {
-            return row.map(function(cell, columnIndex) {
-                if (rowIndex + columnIndex === position.x + position.y)
-                    return true;
-                const difference = position.y - position.x;
-                if (difference === rowIndex - columnIndex) return true;
-            });
-        });
-        return possibleMoves;
+    moveSet(position, board) {
+        let possible = Array(8)
+            .fill(null)
+            .map(makeArray);
+        const i = position.y;
+        const j = position.x;
+        let h, v;
+        //Nord-Ost
+        for (v = i + 1, h = j + 1; indexInBetween(board, v, h); v++, h++) {
+            if (board[v][h] == null) {
+                //An der Position ist keine Figur
+                possible[v][h] = true;
+            } else {
+                if (this.team != board[v][h].team)
+                    //Kein Frienly Fire
+                    possible[v][h] = true;
+                break;
+            }
+        } //Nord-West
+        for (v = i + 1, h = j - 1; indexInBetween(board, v, h); v++, h--) {
+            if (board[v][h] == null) {
+                possible[v][h] = true;
+            } else {
+                if (this.team != board[v][h].team) possible[v][h] = true;
+                break;
+            }
+        }
+        //Süd-Ost
+        for (v = i - 1, h = j + 1; indexInBetween(board, v, h); v--, h++) {
+            if (board[v][h] == null) {
+                possible[v][h] = true;
+            } else {
+                if (this.team != board[v][h].team) possible[v][h] = true;
+                break;
+            }
+        }
+        //Süd-West
+        for (v = i - 1, h = j - 1; indexInBetween(board, v, h); v--, h--) {
+            if (board[v][h] == null) {
+                possible[v][h] = true;
+            } else {
+                if (this.team != board[v][h].team) possible[v][h] = true;
+                break;
+            }
+        }
+        return possible;
     }
 }
 class Noble extends Figure {
@@ -200,26 +333,31 @@ class Noble extends Figure {
         super(type, team);
         this.moveSet = this.moveSet;
     }
-    moveSet(position) {
-        let possibleMoves = Array(8).fill(Array(8).fill(false));
-        const x = position.x;
-        const y = position.y;
+    moveSet(position, board) {
+        let possible = Array(8)
+            .fill(null)
+            .map(makeArray);
+        const j = position.x;
+        const i = position.y;
 
-        possibleMoves = possibleMoves.map(function(row, rowIndex) {
-            return row.map(function(cell, columnIndex) {
-                if (
-                    (rowIndex === y + 2 || rowIndex === y - 2) &&
-                    (columnIndex === x + 1 || columnIndex === x - 1)
-                )
-                    return true;
-                if (
-                    (rowIndex === y + 1 || rowIndex === y - 1) &&
-                    (columnIndex === x + 2 || columnIndex === x - 2)
-                )
-                    return true;
-            });
-        });
+        const points = [
+            { x: j + 1, y: i - 2 },
+            { x: j - 1, y: i - 2 },
+            { x: j + 1, y: i + 2 },
+            { x: j - 1, y: i + 2 },
+            { x: j + 2, y: i + 1 },
+            { x: j + 2, y: i - 1 },
+            { x: j - 2, y: i + 1 },
+            { x: j - 2, y: i - 1 },
+        ];
+        for (let point of points) {
+            if (indexInBetween(board, point.y, point.x))
+                if (board[point.y][point.x] == null)
+                    possible[point.y][point.x] = true;
+                else if (this.team != board[point.y][point.x].team)
+                    possible[point.y][point.x] = true;
+        }
 
-        return possibleMoves;
+        return possible;
     }
 }

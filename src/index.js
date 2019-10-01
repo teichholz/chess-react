@@ -9,7 +9,7 @@ class Game extends React.Component {
     constructor(props) {
         super(props);
         const startBoard = Array(8)
-            .fill(Array(8))
+              .fill(null)
             .map(createRow);
         this.state = {
             board: [startBoard],
