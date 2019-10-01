@@ -29,6 +29,9 @@ class Figure {
         this.imgPath = dispatchFigurePath(type, team);
     }
 }
+function indexInBetween(array, y, x){
+    return y >= 0 && y < array.length && x >= 0 && x < array[y].length;
+}
 class Pawn extends Figure {
     constructor(type, team) {
         super(type, team);
@@ -42,33 +45,39 @@ class Pawn extends Figure {
         // TODO unnoetige Komplexitaet + unschoen
         const factor = this.team === "light" ? 1 : -1;
 
-
-        const couldMove = this.pawnMove(position.y + 1 * factor, position.x, board);
-        if (!this.moved && couldMove) {
-            this.moved = true;
-            this.pawnMove(position.y + 2 * factor, position.x, board);
-        }
-        this.pawnAttack(position.y + 1 * factor, position.x + 1 * factor);
-        this.pawnAttack(position.y + 1 * factor, position.x - 1 * factor);
+        const couldMove = this.pawnMove(
+            position.y + (1 * factor),
+            position.x,
+            board,
+            possibleMoves
+        );
+        // if (!this.moved && couldMove) {
+        //     this.moved = true;
+        //     this.pawnMove(position.y + 2 * factor, position.x, board, possibleMoves);
+        // }
+        // this.pawnAttack(position.y + 1 * factor, position.x + 1 * factor, board, possibleMoves);
+        // this.pawnAttack(position.y + 1 * factor, position.x - 1 * factor, board, possibleMoves);
 
         return possibleMoves;
     }
 
-    pawnAttack(y, x, board) {
+    pawnAttack(y, x, board, moves) {
         const t = x < board[0].length && y < board.length;
-        const t2 = t && board[y][x].team != this.team;
-        if (t && t2) {
-            board[y][x] = true;
+        const t2 = t && board[y][x] && board[y][x].team != this.team;
+        if (t2) {
+            moves[y][x] = true;
             return true;
         }
     }
-    pawnMove(y, x, board) {
+    pawnMove(y, x, board, moves) {
         const t = x < board[0].length && y < board.length;
         const t2 = t && !board[y][x];
-        if (t && t2) {
-            board[y][x] = true;
-            return true;
+        if (t2) {
+            console.log(moves);
+            moves[y][x] = true;
+            return moves;
         }
+        return false;
     }
 }
 class Castle extends Figure {
@@ -76,15 +85,52 @@ class Castle extends Figure {
         super(type, team);
         this.moveSet = this.moveSet;
     }
-    moveSet(position) {
-        let possibleMoves = Array(8).fill(Array(8).fill(false));
-        possibleMoves = possibleMoves.map(function(row, rowIndex) {
-            return row.map(function(cell, columnIndex) {
-                if (rowIndex === position.y) return true;
-                if (columnIndex === position.x) return true;
-            });
-        });
-        return possibleMoves;
+    moveSet(position, board) {
+        let possible = Array(8).fill(Array(8).fill(false));
+        const y = position.y;
+        const x = position.x;
+
+        // Vertikal
+        for (let v = y+1; indexInBetween(board, v, x); v++) {
+            if (!board[v][x]) { //An der Position ist keine Figur
+                possible[v][x] = true;
+            } else {
+                if (this.team != board[v][x].team) //Kein Frienly Fire
+                    possible[v][x] = true;
+                break;
+            }
+        }
+        for (let v = y-1; indexInBetween(board, v, x); v--) {
+            if (!board[v][x]) {
+                possible[v][x] = true;
+            } else {
+                if (this.team != board[v][x].team)
+                    possible[v][x] = true;
+                break;
+            }
+        }
+        //Horizontal
+        for (let h = x+1; indexInBetween(board, y, h); h++) {
+            if (!board[y][h]) {
+                possible[y][h] = true;
+            } else {
+                if (this.team != board[y][h].team)
+                    possible[y][h] = true;
+                break;
+            }
+        }
+        for (let h = x-1; indexInBetween(board, y, h); h--) {
+            if (!board[y][h]) {
+                possible[y][h] = true;
+            } else {
+                if (this.team != board[y][h].team)
+                    possible[y][h] = true;
+                break;
+            }
+        }
+
+
+        return possible;
     }
 }
 class King extends Figure {

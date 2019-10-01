@@ -51,7 +51,7 @@ class Game extends React.Component {
                 return;
             }
             // Hints anzeigen
-            console.log(this.possibleMoves);
+            // console.log(this.possibleMoves);
 
             this.setState({
                 selected: position,
