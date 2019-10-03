@@ -27,6 +27,7 @@ class Figure {
         this.type = type;
         this.team = team;
         this.imgPath = dispatchFigurePath(type, team);
+        this.position = null;
     }
 }
 function indexInBetween(array, y, x) {
@@ -55,7 +56,6 @@ class Pawn extends Figure {
             possibleMoves
         );
         if (!this.moved && couldMove) {
-            this.moved = true;
             this.pawnMove(
                 position.y + 2 * factor,
                 position.x,
